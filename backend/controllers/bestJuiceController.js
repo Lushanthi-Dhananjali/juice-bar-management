@@ -1,56 +1,60 @@
 const BestJuice = require('../models/BestJuice');
 
-// @desc    Get all best juices (Max 5 for Home page)
+// @desc    Get all Best Juices added by Admin
 // @route   GET /api/best-juices
 // @access  Public (Customer and Admin)
 const getBestJuices = async (req, res) => {
   try {
-    const juices = await BestJuice.find().sort({ createdAt: -1 }).limit(5);
+    const juices = await BestJuice.find().sort({ createdAt: -1 });
     res.status(200).json(juices);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-// @desc    Add a new best juice
+// @desc    Add a new Best Juice with PC image upload (Admin only)
 // @route   POST /api/best-juices
 // @access  Private / Admin only
 const addBestJuice = async (req, res) => {
   try {
-    const { name, price, imageUrl } = req.body;
+    const { name, price } = req.body;
 
-    if (!name || !price || !imageUrl) {
-      return res.status(400).json({ message: 'Please provide juice name, price, and image URL' });
+    if (!name || !price) {
+      return res.status(400).json({ message: 'Please provide juice name and price' });
     }
 
-    const juice = await BestJuice.create({
-      name,
+    if (!req.file) {
+      return res.status(400).json({ message: 'Please upload an image from your PC' });
+    }
+
+    const imageUrl = `/uploads/${req.file.filename}`;
+
+    const newJuice = await BestJuice.create({
+      name: name.trim(),
       price: Number(price),
       imageUrl,
     });
 
-    res.status(201).json(juice);
+    res.status(201).json(newJuice);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-// @desc    Update a best juice price or details
+// @desc    Update a Best Juice price (Admin only)
 // @route   PUT /api/best-juices/:id
 // @access  Private / Admin only
-const updateBestJuice = async (req, res) => {
+const updateBestJuicePrice = async (req, res) => {
   try {
-    const { name, price, imageUrl } = req.body;
-
+    const { price, name } = req.body;
     const juice = await BestJuice.findById(req.params.id);
 
     if (!juice) {
       return res.status(404).json({ message: 'Juice item not found' });
     }
 
-    juice.name = name || juice.name;
-    juice.price = price !== undefined ? Number(price) : juice.price;
-    juice.imageUrl = imageUrl || juice.imageUrl;
+    if (price !== undefined) juice.price = Number(price);
+    if (name) juice.name = name.trim();
 
     const updatedJuice = await juice.save();
     res.status(200).json(updatedJuice);
@@ -59,7 +63,7 @@ const updateBestJuice = async (req, res) => {
   }
 };
 
-// @desc    Delete a best juice
+// @desc    Delete a Best Juice (Admin only)
 // @route   DELETE /api/best-juices/:id
 // @access  Private / Admin only
 const deleteBestJuice = async (req, res) => {
@@ -80,6 +84,6 @@ const deleteBestJuice = async (req, res) => {
 module.exports = {
   getBestJuices,
   addBestJuice,
-  updateBestJuice,
+  updateBestJuicePrice,
   deleteBestJuice,
 };

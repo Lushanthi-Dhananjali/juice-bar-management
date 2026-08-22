@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
+const path = require('path');
 const connectDB = require('./config/db');
 
 // Import All Routes
@@ -17,6 +18,9 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
+
+// Serve uploaded juice images statically from the uploads folder
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Mount API Routes
 app.use('/api/auth', authRoutes);

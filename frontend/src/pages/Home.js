@@ -9,15 +9,17 @@ const Home = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  // Form state for adding new juice (Admin)
+  // Add Juice Modal State (Admin)
   const [showAddModal, setShowAddModal] = useState(false);
-  const [newJuice, setNewJuice] = useState({ name: '', price: '', imageUrl: '' });
+  const [name, setName] = useState('');
+  const [price, setPrice] = useState('');
+  const [imageFile, setImageFile] = useState(null);
 
-  // State for editing juice price (Admin)
+  // Edit Price Modal State (Admin)
   const [editingJuice, setEditingJuice] = useState(null);
   const [editPrice, setEditPrice] = useState('');
 
-  // Fetch top 5 juices from backend
+  // Fetch Juices from Database
   const fetchBestJuices = async () => {
     try {
       setLoading(true);
@@ -25,7 +27,7 @@ const Home = () => {
       setBestJuices(res.data);
       setLoading(false);
     } catch (err) {
-      setError('Failed to load juices');
+      setError('Failed to load juices from server');
       setLoading(false);
     }
   };
@@ -34,20 +36,43 @@ const Home = () => {
     fetchBestJuices();
   }, []);
 
-  // Admin: Add new juice
+  // Admin: Add new juice with PC image upload
   const handleAddJuice = async (e) => {
     e.preventDefault();
+
+    if (!name.trim() || !price) {
+      alert('Please provide juice name and price.');
+      return;
+    }
+
+    if (!imageFile) {
+      alert('Please select an image file from your PC.');
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('name', name.trim());
+    formData.append('price', price);
+    formData.append('image', imageFile);
+
     try {
-      await axios.post('http://localhost:5000/api/best-juices', newJuice);
-      setNewJuice({ name: '', price: '', imageUrl: '' });
+      await axios.post('http://localhost:5000/api/best-juices', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      setName('');
+      setPrice('');
+      setImageFile(null);
       setShowAddModal(false);
       fetchBestJuices();
     } catch (err) {
-      alert(err.response?.data?.message || 'Error adding juice');
+      alert(err.response?.data?.message || 'Error uploading and adding juice');
     }
   };
 
-  // Admin: Update juice price
+  // Admin: Update Price
   const handleUpdatePrice = async (e) => {
     e.preventDefault();
     try {
@@ -62,9 +87,9 @@ const Home = () => {
     }
   };
 
-  // Admin: Delete juice
+  // Admin: Delete Juice
   const handleDeleteJuice = async (id) => {
-    if (window.confirm('Are you sure you want to remove this juice from Best Juices?')) {
+    if (window.confirm('Are you sure you want to delete this juice?')) {
       try {
         await axios.delete(`http://localhost:5000/api/best-juices/${id}`);
         fetchBestJuices();
@@ -74,51 +99,65 @@ const Home = () => {
     }
   };
 
+  // Resolve backend static image URL
+  const getFullImageUrl = (url) => {
+    if (!url) return '';
+    if (url.startsWith('/uploads')) {
+      return `http://localhost:5000${url}`;
+    }
+    return url;
+  };
+
   return (
     <div className="container">
       {/* Header Banner */}
       <div style={{ textAlign: 'center', margin: '20px 0 30px' }}>
         <h1 style={{ color: '#ff6b35', fontSize: '32px', marginBottom: '8px' }}>
-          🌟 Our Best Juice
+          🌟 Our Best Juices
         </h1>
         <p style={{ color: '#718096' }}>
           Handcrafted daily from 100% natural, farm-fresh organic fruits.
         </p>
 
-        {/* Admin Add Juice Button */}
         {isAdmin && (
           <button
             onClick={() => setShowAddModal(true)}
             className="btn-primary"
             style={{ width: 'auto', padding: '10px 20px', marginTop: '16px' }}
           >
-            ➕ Add New Best Juice (Admin)
+            ➕ Add New Juice (Admin)
           </button>
         )}
       </div>
 
       {error && <div style={{ color: '#e53e3e', textAlign: 'center' }}>{error}</div>}
 
-      {/* Featured 5 Juices Grid */}
+      {/* Juices Grid */}
       {loading ? (
-        <p style={{ textAlign: 'center' }}>Loading our best juices...</p>
+        <p style={{ textAlign: 'center' }}>Loading juices...</p>
+      ) : bestJuices.length === 0 ? (
+        <div style={{ textAlign: 'center', padding: '40px', color: '#718096' }}>
+          <h3>No juices added yet.</h3>
+          {isAdmin ? (
+            <p>Click "Add New Juice" above to upload a juice with a photo from your PC.</p>
+          ) : (
+            <p>Please check back soon for our fresh juice selection!</p>
+          )}
+        </div>
       ) : (
         <div className="card-grid">
           {bestJuices.map((juice) => (
             <div key={juice._id} className="card">
               <img
-                src={juice.imageUrl}
+                src={getFullImageUrl(juice.imageUrl)}
                 alt={juice.name}
-                onError={(e) => {
-                  e.target.src = 'https://images.unsplash.com/photo-1613478223719-2ab802602423?w=400';
-                }}
+                style={{ width: '100%', height: '180px', objectFit: 'cover', borderRadius: '6px' }}
               />
               <h3 style={{ margin: '12px 0 6px', fontSize: '18px' }}>{juice.name}</h3>
               <p style={{ color: '#ff6b35', fontWeight: 'bold', fontSize: '16px' }}>
                 Rs. {juice.price}
               </p>
 
-              {/* Admin Controls */}
               {isAdmin && (
                 <div style={{ display: 'flex', gap: '8px', marginTop: '12px', justifyContent: 'center' }}>
                   <button
@@ -152,7 +191,7 @@ const Home = () => {
         </div>
       )}
 
-      {/* Admin Add Modal */}
+      {/* Admin Add Juice Modal */}
       {showAddModal && (
         <div
           style={{
@@ -169,42 +208,45 @@ const Home = () => {
           }}
         >
           <div className="auth-card" style={{ margin: 0, width: '90%', maxWidth: '450px' }}>
-            <h3>Add New Best Juice</h3>
+            <h3>Add New Juice</h3>
             <form onSubmit={handleAddJuice} style={{ marginTop: '16px' }}>
               <div className="form-group">
                 <label>Juice Name:</label>
                 <input
                   type="text"
-                  value={newJuice.name}
-                  onChange={(e) => setNewJuice({ ...newJuice, name: e.target.value })}
-                  placeholder="e.g. Mango Passion Punch"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="e.g. Avocado Shake"
                   required
                 />
               </div>
+
               <div className="form-group">
                 <label>Price (Rs.):</label>
                 <input
                   type="number"
-                  value={newJuice.price}
-                  onChange={(e) => setNewJuice({ ...newJuice, price: e.target.value })}
+                  value={price}
+                  onChange={(e) => setPrice(e.target.value)}
                   placeholder="e.g. 450"
                   min="0"
                   required
                 />
               </div>
+
               <div className="form-group">
-                <label>Image URL:</label>
+                <label>Upload Photo from PC:</label>
                 <input
-                  type="url"
-                  value={newJuice.imageUrl}
-                  onChange={(e) => setNewJuice({ ...newJuice, imageUrl: e.target.value })}
-                  placeholder="https://example.com/juice.jpg"
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => setImageFile(e.target.files[0])}
+                  style={{ padding: '6px' }}
                   required
                 />
               </div>
+
               <div style={{ display: 'flex', gap: '10px', marginTop: '16px' }}>
                 <button type="submit" className="btn-primary">
-                  Save Juice
+                  Save & Upload
                 </button>
                 <button
                   type="button"
@@ -292,14 +334,8 @@ const Home = () => {
         }}
       >
         <h2 style={{ color: '#2d3748', marginBottom: '14px' }}>🍹 About Our Juice Bar</h2>
-        <p style={{ lineHeight: '1.7', color: '#4a5568', marginBottom: '12px' }}>
-          Welcome to <strong>Fresh Juice Bar</strong>! We are dedicated to bringing you the finest,
-          healthiest, and most refreshing beverages crafted from freshly picked tropical and local fruits.
-          Our juices contain no artificial preservatives, added chemical sugars, or synthetic flavors.
-        </p>
         <p style={{ lineHeight: '1.7', color: '#4a5568' }}>
-          Whether you are stopping by for a morning vitamin boost, an afternoon refresher, or an energy-packed
-          smoothie, our friendly staff and master juicers are here to serve you with top-quality drinks every single day.
+          Welcome to <strong>Fresh Juice Bar</strong>! Enjoy fresh, delicious natural juices prepared directly on order.
         </p>
       </div>
     </div>
