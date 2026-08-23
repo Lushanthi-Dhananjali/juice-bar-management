@@ -3,7 +3,7 @@ import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 
 const Menu = () => {
-  const { isAdmin } = useAuth();
+  const { user, isAdmin } = useAuth();
 
   const [menuItems, setMenuItems] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -25,7 +25,12 @@ const Menu = () => {
     numberOfItems: '',
   });
 
-  // Fetch all menu items
+  const getAuthConfig = () => ({
+    headers: {
+      Authorization: `Bearer ${user?.token || localStorage.getItem('token')}`,
+    },
+  });
+
   const fetchMenuItems = async () => {
     try {
       setLoading(true);
@@ -46,11 +51,15 @@ const Menu = () => {
   const handleAddItem = async (e) => {
     e.preventDefault();
     try {
-      await axios.post('http://localhost:5000/api/menu', {
-        name: newItem.name.trim(),
-        price: Number(newItem.price),
-        numberOfItems: Number(newItem.numberOfItems),
-      });
+      await axios.post(
+        'http://localhost:5000/api/menu',
+        {
+          name: newItem.name.trim(),
+          price: Number(newItem.price),
+          numberOfItems: Number(newItem.numberOfItems),
+        },
+        getAuthConfig()
+      );
       setNewItem({ name: '', price: '', numberOfItems: '' });
       setShowAddModal(false);
       fetchMenuItems();
@@ -63,11 +72,15 @@ const Menu = () => {
   const handleUpdateItem = async (e) => {
     e.preventDefault();
     try {
-      await axios.put(`http://localhost:5000/api/menu/${editingItem._id}`, {
-        name: editFormData.name.trim(),
-        price: Number(editFormData.price),
-        numberOfItems: Number(editFormData.numberOfItems),
-      });
+      await axios.put(
+        `http://localhost:5000/api/menu/${editingItem._id}`,
+        {
+          name: editFormData.name.trim(),
+          price: Number(editFormData.price),
+          numberOfItems: Number(editFormData.numberOfItems),
+        },
+        getAuthConfig()
+      );
       setEditingItem(null);
       fetchMenuItems();
     } catch (err) {
@@ -75,11 +88,11 @@ const Menu = () => {
     }
   };
 
-  // Admin: Delete Menu Item
+  // Admin: Delete Menu Item (Syncs to Home Page)
   const handleDeleteItem = async (id) => {
     if (window.confirm('Are you sure you want to delete this menu item?')) {
       try {
-        await axios.delete(`http://localhost:5000/api/menu/${id}`);
+        await axios.delete(`http://localhost:5000/api/menu/${id}`, getAuthConfig());
         fetchMenuItems();
       } catch (err) {
         alert(err.response?.data?.message || 'Error deleting menu item');
@@ -148,7 +161,6 @@ const Menu = () => {
                   )}
                 </td>
 
-                {/* Admin Action Buttons */}
                 {isAdmin && (
                   <td>
                     <div style={{ display: 'flex', gap: '8px' }}>
@@ -214,7 +226,7 @@ const Menu = () => {
                   type="text"
                   value={newItem.name}
                   onChange={(e) => setNewItem({ ...newItem, name: e.target.value })}
-                  placeholder="e.g. Lime Mint"
+                  placeholder="e.g. Passion Fruit"
                   required
                 />
               </div>

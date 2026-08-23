@@ -62,7 +62,6 @@ const updateMenuItem = async (req, res) => {
     const newPrice = price !== undefined ? Number(price) : menuItem.price;
     const newStock = numberOfItems !== undefined ? Number(numberOfItems) : menuItem.numberOfItems;
 
-    // Update Menu collection
     menuItem.name = newName;
     menuItem.price = newPrice;
     menuItem.numberOfItems = newStock;
@@ -98,15 +97,18 @@ const deleteMenuItem = async (req, res) => {
 
     const itemName = menuItem.name.trim();
 
-    // Delete from MenuItem collection
+    // 1. Delete from MenuItem collection
     await MenuItem.findByIdAndDelete(req.params.id);
 
-    // 2-WAY SYNC: Also delete from BestJuice (Home Page)
+    // 2. 2-WAY SYNC: Delete from BestJuice (Home Page)
     await BestJuice.deleteMany({
       name: { $regex: new RegExp(`^${itemName}$`, 'i') },
     });
 
-    res.status(200).json({ message: 'Menu item and matching Home Juice deleted successfully', id: req.params.id });
+    res.status(200).json({
+      message: 'Menu item and matching Home Juice deleted successfully',
+      id: req.params.id,
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

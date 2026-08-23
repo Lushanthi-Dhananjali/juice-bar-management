@@ -3,7 +3,7 @@ import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 
 const Home = () => {
-  const { isAdmin } = useAuth();
+  const { user, isAdmin } = useAuth();
 
   const [bestJuices, setBestJuices] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -19,7 +19,12 @@ const Home = () => {
   const [editingJuice, setEditingJuice] = useState(null);
   const [editPrice, setEditPrice] = useState('');
 
-  // Fetch Juices from Database
+  const getAuthConfig = () => ({
+    headers: {
+      Authorization: `Bearer ${user?.token || localStorage.getItem('token')}`,
+    },
+  });
+
   const fetchBestJuices = async () => {
     try {
       setLoading(true);
@@ -36,7 +41,7 @@ const Home = () => {
     fetchBestJuices();
   }, []);
 
-  // Admin: Add new juice with PC image upload
+  // Admin: Add new juice
   const handleAddJuice = async (e) => {
     e.preventDefault();
 
@@ -59,6 +64,7 @@ const Home = () => {
       await axios.post('http://localhost:5000/api/best-juices', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
+          Authorization: `Bearer ${user?.token || localStorage.getItem('token')}`,
         },
       });
 
@@ -76,9 +82,11 @@ const Home = () => {
   const handleUpdatePrice = async (e) => {
     e.preventDefault();
     try {
-      await axios.put(`http://localhost:5000/api/best-juices/${editingJuice._id}`, {
-        price: Number(editPrice),
-      });
+      await axios.put(
+        `http://localhost:5000/api/best-juices/${editingJuice._id}`,
+        { price: Number(editPrice) },
+        getAuthConfig()
+      );
       setEditingJuice(null);
       setEditPrice('');
       fetchBestJuices();
@@ -87,11 +95,11 @@ const Home = () => {
     }
   };
 
-  // Admin: Delete Juice
+  // Admin: Delete Juice (Syncs to Menu Page)
   const handleDeleteJuice = async (id) => {
     if (window.confirm('Are you sure you want to delete this juice?')) {
       try {
-        await axios.delete(`http://localhost:5000/api/best-juices/${id}`);
+        await axios.delete(`http://localhost:5000/api/best-juices/${id}`, getAuthConfig());
         fetchBestJuices();
       } catch (err) {
         alert(err.response?.data?.message || 'Error deleting juice');
@@ -99,7 +107,6 @@ const Home = () => {
     }
   };
 
-  // Resolve backend static image URL
   const getFullImageUrl = (url) => {
     if (!url) return '';
     if (url.startsWith('/uploads')) {
@@ -216,7 +223,7 @@ const Home = () => {
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="e.g. Avocado Shake"
+                  placeholder="e.g. Avocado juice"
                   required
                 />
               </div>
@@ -227,7 +234,7 @@ const Home = () => {
                   type="number"
                   value={price}
                   onChange={(e) => setPrice(e.target.value)}
-                  placeholder="e.g. 450"
+                  placeholder="e.g. 250"
                   min="0"
                   required
                 />
@@ -323,7 +330,7 @@ const Home = () => {
         </div>
       )}
 
-      {/* Introduction Section */}
+      {/* About Section */}
       <div
         style={{
           marginTop: '50px',

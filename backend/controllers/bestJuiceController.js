@@ -32,14 +32,14 @@ const addBestJuice = async (req, res) => {
     const itemPrice = Number(price);
     const imageUrl = `/uploads/${req.file.filename}`;
 
-    // 1. Create on Home page (BestJuice)
+    // 1. Create in BestJuice (Home page)
     const newJuice = await BestJuice.create({
       name: cleanName,
       price: itemPrice,
       imageUrl,
     });
 
-    // 2. Auto-sync to Menu (case-insensitive check)
+    // 2. Auto-sync to Menu
     let menuItem = await MenuItem.findOne({
       name: { $regex: new RegExp(`^${cleanName}$`, 'i') },
     });
@@ -82,7 +82,7 @@ const updateBestJuicePrice = async (req, res) => {
     juice.price = newPrice;
     const updatedJuice = await juice.save();
 
-    // 2-WAY SYNC: Update matching item on the Menu page (case-insensitive)
+    // 2-WAY SYNC: Update matching item on Menu page
     const menuItem = await MenuItem.findOne({
       name: { $regex: new RegExp(`^${oldName}$`, 'i') },
     });
@@ -99,7 +99,7 @@ const updateBestJuicePrice = async (req, res) => {
   }
 };
 
-// @desc    Delete a Best Juice
+// @desc    Delete a Best Juice AND delete from Menu if exists
 // @route   DELETE /api/best-juices/:id
 // @access  Private / Admin only
 const deleteBestJuice = async (req, res) => {
@@ -110,8 +110,20 @@ const deleteBestJuice = async (req, res) => {
       return res.status(404).json({ message: 'Juice item not found' });
     }
 
+    const juiceName = juice.name.trim();
+
+    // 1. Delete from BestJuice
     await BestJuice.findByIdAndDelete(req.params.id);
-    res.status(200).json({ message: 'Juice removed successfully', id: req.params.id });
+
+    // 2. 2-WAY SYNC: Delete from Menu collection
+    await MenuItem.deleteMany({
+      name: { $regex: new RegExp(`^${juiceName}$`, 'i') },
+    });
+
+    res.status(200).json({
+      message: 'Juice and matching menu item deleted successfully',
+      id: req.params.id,
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
