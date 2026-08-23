@@ -9,17 +9,17 @@ const Menu = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  // State for adding a new menu item (Admin)
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [newItem, setNewItem] = useState({
+  // State for editing a menu item stock / price (Admin)
+  const [editingItem, setEditingItem] = useState(null);
+  const [editFormData, setEditFormData] = useState({
     name: '',
     price: '',
     numberOfItems: '',
   });
 
-  // State for editing a menu item (Admin)
-  const [editingItem, setEditingItem] = useState(null);
-  const [editFormData, setEditFormData] = useState({
+  // State for manual Add Menu Item Modal (Admin)
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [newItem, setNewItem] = useState({
     name: '',
     price: '',
     numberOfItems: '',
@@ -42,12 +42,12 @@ const Menu = () => {
     fetchMenuItems();
   }, []);
 
-  // Admin: Add Menu Item
+  // Admin: Add Menu Item manually
   const handleAddItem = async (e) => {
     e.preventDefault();
     try {
       await axios.post('http://localhost:5000/api/menu', {
-        name: newItem.name,
+        name: newItem.name.trim(),
         price: Number(newItem.price),
         numberOfItems: Number(newItem.numberOfItems),
       });
@@ -59,12 +59,12 @@ const Menu = () => {
     }
   };
 
-  // Admin: Update Menu Item
+  // Admin: Update Stock or Price
   const handleUpdateItem = async (e) => {
     e.preventDefault();
     try {
       await axios.put(`http://localhost:5000/api/menu/${editingItem._id}`, {
-        name: editFormData.name,
+        name: editFormData.name.trim(),
         price: Number(editFormData.price),
         numberOfItems: Number(editFormData.numberOfItems),
       });
@@ -91,9 +91,9 @@ const Menu = () => {
     <div className="container">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '20px 0' }}>
         <div>
-          <h1 style={{ color: '#ff6b35', fontSize: '28px' }}>📋 Juice Bar Menu</h1>
+          <h1 style={{ color: '#ff6b35', fontSize: '28px' }}>📋 Juice Bar Menu & Inventory</h1>
           <p style={{ color: '#718096', marginTop: '4px' }}>
-            Browse our selection of fresh juices and real-time inventory.
+            All juices added from the Home page are automatically synchronized here with live stock levels.
           </p>
         </div>
 
@@ -112,6 +112,11 @@ const Menu = () => {
 
       {loading ? (
         <p style={{ textAlign: 'center', marginTop: '40px' }}>Loading menu items...</p>
+      ) : menuItems.length === 0 ? (
+        <div style={{ textAlign: 'center', padding: '40px', color: '#718096' }}>
+          <h3>No menu items available.</h3>
+          <p>Add juices from the Home page or click "Add Menu Item" above.</p>
+        </div>
       ) : (
         <table className="table-custom">
           <thead>
@@ -166,7 +171,7 @@ const Menu = () => {
                           fontSize: '12px',
                         }}
                       >
-                        ✏️ Edit
+                        ✏️ Edit Stock
                       </button>
                       <button
                         onClick={() => handleDeleteItem(item._id)}
@@ -184,7 +189,7 @@ const Menu = () => {
         </table>
       )}
 
-      {/* Admin Add Modal */}
+      {/* Admin Add Item Modal */}
       {showAddModal && (
         <div
           style={{
@@ -209,7 +214,7 @@ const Menu = () => {
                   type="text"
                   value={newItem.name}
                   onChange={(e) => setNewItem({ ...newItem, name: e.target.value })}
-                  placeholder="e.g. Avocado Delight"
+                  placeholder="e.g. Lime Mint"
                   required
                 />
               </div>
@@ -219,13 +224,13 @@ const Menu = () => {
                   type="number"
                   value={newItem.price}
                   onChange={(e) => setNewItem({ ...newItem, price: e.target.value })}
-                  placeholder="e.g. 500"
+                  placeholder="e.g. 350"
                   min="0"
                   required
                 />
               </div>
               <div className="form-group">
-                <label>Available Number of Items:</label>
+                <label>Stock Quantity (Cups):</label>
                 <input
                   type="number"
                   value={newItem.numberOfItems}
@@ -260,7 +265,7 @@ const Menu = () => {
         </div>
       )}
 
-      {/* Admin Edit Modal */}
+      {/* Admin Edit Stock Modal */}
       {editingItem && (
         <div
           style={{
@@ -277,7 +282,7 @@ const Menu = () => {
           }}
         >
           <div className="auth-card" style={{ margin: 0, width: '90%', maxWidth: '420px' }}>
-            <h3>Edit {editingItem.name}</h3>
+            <h3>Edit Stock: {editingItem.name}</h3>
             <form onSubmit={handleUpdateItem} style={{ marginTop: '16px' }}>
               <div className="form-group">
                 <label>Juice Name:</label>
@@ -299,7 +304,7 @@ const Menu = () => {
                 />
               </div>
               <div className="form-group">
-                <label>Stock Count:</label>
+                <label>Available Stock (Cups):</label>
                 <input
                   type="number"
                   value={editFormData.numberOfItems}
@@ -312,7 +317,7 @@ const Menu = () => {
               </div>
               <div style={{ display: 'flex', gap: '10px', marginTop: '16px' }}>
                 <button type="submit" className="btn-primary">
-                  Update Item
+                  Update Stock
                 </button>
                 <button
                   type="button"
