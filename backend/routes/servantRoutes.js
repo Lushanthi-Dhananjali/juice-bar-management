@@ -3,6 +3,7 @@ const router = express.Router();
 const {
   getServants,
   addServant,
+  updateServant,
   deleteServant,
 } = require('../controllers/servantController');
 const { protect, adminOnly } = require('../middleware/authMiddleware');
@@ -14,9 +15,11 @@ router
   .get(getServants)
   .post(protect, adminOnly, addServant);
 
-// DELETE /api/servants/:id (Admin Only)
+// PUT /api/servants/:id (Admin Only - Edit Name/Age)
+// DELETE /api/servants/:id (Admin Only - Delete Servant)
 router
   .route('/:id')
+  .put(protect, adminOnly, updateServant)
   .delete(protect, adminOnly, deleteServant);
 
 module.exports = router;
