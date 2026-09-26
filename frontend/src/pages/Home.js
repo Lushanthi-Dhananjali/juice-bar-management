@@ -155,16 +155,39 @@ const Home = () => {
         <div className="card-grid">
           {bestJuices.map((juice) => (
             <div key={juice._id} className="card">
-              <img
-                src={getFullImageUrl(juice.imageUrl)}
-                alt={juice.name}
-                onError={(e) => {
-                  e.target.src =
-                    'https://images.unsplash.com/photo-1613478223719-2ab802602423?w=400';
+              {/* Image Container with Fixed Dimensions */}
+              <div
+                style={{
+                  width: '100%',
+                  height: '160px',
+                  borderRadius: '10px',
+                  overflow: 'hidden',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  backgroundColor: '#f7fafc',
                 }}
-              />
-              <h3>{juice.name}</h3>
-              <p>Rs. {juice.price}</p>
+              >
+                <img
+                  src={getFullImageUrl(juice.imageUrl)}
+                  alt={juice.name}
+                  onError={(e) => {
+                    e.target.src =
+                      'https://images.unsplash.com/photo-1613478223719-2ab802602423?w=400';
+                  }}
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover',
+                    display: 'block',
+                  }}
+                />
+              </div>
+
+              <h3 style={{ margin: '12px 0 6px', fontSize: '18px' }}>{juice.name}</h3>
+              <p style={{ color: '#ff6b35', fontWeight: 'bold', fontSize: '16px' }}>
+                Rs. {juice.price}
+              </p>
 
               {isAdmin && (
                 <div style={{ display: 'flex', gap: '8px', marginTop: '14px' }}>
