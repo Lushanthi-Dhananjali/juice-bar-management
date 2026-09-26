@@ -108,7 +108,7 @@ const Home = () => {
   };
 
   const getFullImageUrl = (url) => {
-    if (!url) return '';
+    if (!url) return 'https://images.unsplash.com/photo-1613478223719-2ab802602423?w=400';
     if (url.startsWith('/uploads')) {
       return `http://localhost:5000${url}`;
     }
@@ -158,15 +158,16 @@ const Home = () => {
               <img
                 src={getFullImageUrl(juice.imageUrl)}
                 alt={juice.name}
-                style={{ width: '100%', height: '180px', objectFit: 'cover', borderRadius: '6px' }}
+                onError={(e) => {
+                  e.target.src =
+                    'https://images.unsplash.com/photo-1613478223719-2ab802602423?w=400';
+                }}
               />
-              <h3 style={{ margin: '12px 0 6px', fontSize: '18px' }}>{juice.name}</h3>
-              <p style={{ color: '#ff6b35', fontWeight: 'bold', fontSize: '16px' }}>
-                Rs. {juice.price}
-              </p>
+              <h3>{juice.name}</h3>
+              <p>Rs. {juice.price}</p>
 
               {isAdmin && (
-                <div style={{ display: 'flex', gap: '8px', marginTop: '12px', justifyContent: 'center' }}>
+                <div style={{ display: 'flex', gap: '8px', marginTop: '14px' }}>
                   <button
                     onClick={() => {
                       setEditingJuice(juice);
@@ -176,10 +177,11 @@ const Home = () => {
                       background: '#3182ce',
                       color: 'white',
                       border: 'none',
-                      padding: '6px 10px',
-                      borderRadius: '4px',
+                      padding: '6px 12px',
+                      borderRadius: '6px',
                       cursor: 'pointer',
                       fontSize: '12px',
+                      fontWeight: '500',
                     }}
                   >
                     ✏️ Change Price
@@ -187,7 +189,7 @@ const Home = () => {
                   <button
                     onClick={() => handleDeleteJuice(juice._id)}
                     className="btn-danger"
-                    style={{ fontSize: '12px', padding: '6px 10px' }}
+                    style={{ fontSize: '12px', padding: '6px 12px', borderRadius: '6px' }}
                   >
                     🗑️ Delete
                   </button>
@@ -342,7 +344,8 @@ const Home = () => {
       >
         <h2 style={{ color: '#2d3748', marginBottom: '14px' }}>🍹 About Our Juice Bar</h2>
         <p style={{ lineHeight: '1.7', color: '#4a5568' }}>
-          Welcome to <strong>Fresh Juice Bar</strong>! Enjoy fresh, delicious natural juices prepared directly on order.
+          Welcome to <strong>Fresh Juice Bar</strong>! Enjoy fresh, delicious natural juices
+          prepared directly on order.
         </p>
       </div>
     </div>

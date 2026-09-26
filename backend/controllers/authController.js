@@ -50,12 +50,12 @@ const registerUser = async (req, res) => {
       return res.status(400).json({ message: 'A user with this name already exists' });
     }
 
-    // 5. Create new user
+    // 5. Create new user (plain text password stored directly)
     const user = await User.create({
       name: name.trim(),
       age: Number(age),
       role,
-      password,
+      password: String(password),
     });
 
     if (user) {
@@ -90,19 +90,24 @@ const loginUser = async (req, res) => {
     // 2. Find user matching BOTH name and role
     const user = await User.findOne({ name: name.trim(), role });
 
-    // 3. Check if user exists and password matches
-    if (user && (await user.matchPassword(password))) {
-      return res.status(200).json({
-        _id: user._id,
-        name: user.name,
-        age: user.age,
-        role: user.role,
-        token: generateToken(user._id, user.role),
-        message: 'Login successful',
-      });
-    } else {
+    // 3. Check if user exists and verify plain text password
+    if (!user) {
       return res.status(401).json({ message: 'Invalid name, password, or role selection' });
     }
+
+    const isMatch = await user.matchPassword(password);
+    if (!isMatch) {
+      return res.status(401).json({ message: 'Invalid name, password, or role selection' });
+    }
+
+    return res.status(200).json({
+      _id: user._id,
+      name: user.name,
+      age: user.age,
+      role: user.role,
+      token: generateToken(user._id, user.role),
+      message: 'Login successful',
+    });
   } catch (error) {
     return res.status(500).json({ message: error.message });
   }
