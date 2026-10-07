@@ -159,7 +159,7 @@ const Home = () => {
               <div
                 style={{
                   width: '100%',
-                  height: '160px',
+                  height: '180px',
                   borderRadius: '10px',
                   overflow: 'hidden',
                   display: 'flex',
@@ -178,7 +178,7 @@ const Home = () => {
                   style={{
                     width: '100%',
                     height: '100%',
-                    objectFit: 'cover',
+                    objectFit: 'contain',
                     display: 'block',
                   }}
                 />
